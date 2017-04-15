@@ -34,7 +34,7 @@ import (
 type FormatError string
 
 func (e FormatError) Error() string {
-	return fmt.Sprintf("dnf: invalid format: %s", e)
+	return fmt.Sprintf("dng: invalid format: %s", e)
 }
 
 // An UnsupportedError reports that the input uses a valid but
@@ -42,14 +42,14 @@ func (e FormatError) Error() string {
 type UnsupportedError string
 
 func (e UnsupportedError) Error() string {
-	return fmt.Sprintf("dnf: unsupported feature: %s", e)
+	return fmt.Sprintf("dng: unsupported feature: %s", e)
 }
 
 // An InternalError reports that an internal error was encountered.
 type InternalError string
 
 func (e InternalError) Error() string {
-	return fmt.Sprintf("dnf: internal error: %s", e)
+	return fmt.Sprintf("dng: internal error: %s", e)
 }
 
 type decoder struct {
@@ -299,8 +299,8 @@ func newDecoder(r io.Reader) (*decoder, error) {
 			d.config.ColorModel = color.GrayModel
 		}
 	case pYCbCr:
-		d.mode = mNRGBA
-		d.config.ColorModel = NYCbCrAModel
+		d.mode = mNYCbCrA
+		d.config.ColorModel = color.NYCbCrAModel
 	default:
 		return nil, UnsupportedError("color model")
 	}
@@ -337,7 +337,7 @@ func NewReader(r io.Reader) (io.Reader, error) {
 	return io.NewSectionReader(d.r, offset, n), nil
 }
 
-// Decode reads a CR2 image from r and returns the embedded JPEG thumbnail as
+// Decode reads a DNG image from r and returns the embedded JPEG thumbnail as
 // an image.Image.
 func Decode(r io.Reader) (image.Image, error) {
 	r, err := NewReader(r)

@@ -116,4 +116,5 @@ const (
 	mRGB
 	mRGBA
 	mNRGBA
+	mNYCbCrA
 )
