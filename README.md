@@ -13,7 +13,7 @@ import (
 	"image/png"
 	"os"
 
-	_ "github.com/mdouchement/dng"
+	_ "github.com/eberle1080/dng"
 )
 
 var (
