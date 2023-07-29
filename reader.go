@@ -31,25 +31,31 @@ import (
 )
 
 // A FormatError reports that the input is not a valid TIFF image.
-type FormatError string
+type FormatError struct {
+	Format string
+}
 
-func (e FormatError) Error() string {
-	return fmt.Sprintf("dng: invalid format: %s", e)
+func (e *FormatError) Error() string {
+	return fmt.Sprintf("dng: invalid format: %s", e.Format)
 }
 
 // An UnsupportedError reports that the input uses a valid but
 // unimplemented feature.
-type UnsupportedError string
+type UnsupportedError struct {
+	Feature string
+}
 
-func (e UnsupportedError) Error() string {
-	return fmt.Sprintf("dng: unsupported feature: %s", e)
+func (e *UnsupportedError) Error() string {
+	return fmt.Sprintf("dng: unsupported feature: %s", e.Feature)
 }
 
 // An InternalError reports that an internal error was encountered.
-type InternalError string
+type InternalError struct {
+	Message string
+}
 
-func (e InternalError) Error() string {
-	return fmt.Sprintf("dng: internal error: %s", e)
+func (e *InternalError) Error() string {
+	return fmt.Sprintf("dng: internal error: %s", e.Message)
 }
 
 type decoder struct {
@@ -109,7 +115,7 @@ func (d *decoder) ifdUint(p []byte) (u []uint, err error) {
 			u[i] = uint(d.byteOrder.Uint32(raw[4*i : 4*(i+1)]))
 		}
 	default:
-		return nil, UnsupportedError("data type")
+		return nil, &UnsupportedError{"data type"}
 	}
 	return u, nil
 }
@@ -145,7 +151,7 @@ func (d *decoder) parseIFD(p []byte) error {
 		}
 		numcolors := len(val) / 3
 		if len(val)%3 != 0 || numcolors <= 0 || numcolors > 256 {
-			return FormatError("bad ColorMap length")
+			return &FormatError{"bad ColorMap length"}
 		}
 		d.palette = make([]color.Color, numcolors)
 		for i := 0; i < numcolors; i++ {
@@ -167,7 +173,7 @@ func (d *decoder) parseIFD(p []byte) error {
 		}
 		for _, v := range val {
 			if v != 1 {
-				return UnsupportedError("sample format")
+				return &UnsupportedError{"sample format"}
 			}
 		}
 	}
@@ -219,7 +225,7 @@ func newDecoder(r io.Reader) (*decoder, error) {
 	case beHeader:
 		d.byteOrder = binary.BigEndian
 	default:
-		return nil, FormatError("malformed header")
+		return nil, &FormatError{"malformed header"}
 	}
 
 	ifdOffset := int64(d.byteOrder.Uint32(p[4:8]))
@@ -246,7 +252,7 @@ func newDecoder(r io.Reader) (*decoder, error) {
 	d.config.Height = int(d.firstVal(tImageLength))
 
 	if _, ok := d.features[tBitsPerSample]; !ok {
-		return nil, FormatError("BitsPerSample tag missing")
+		return nil, &FormatError{"BitsPerSample tag missing"}
 	}
 	d.bpp = d.firstVal(tBitsPerSample)
 
@@ -255,7 +261,7 @@ func newDecoder(r io.Reader) (*decoder, error) {
 	case pRGB:
 		for _, b := range d.features[tBitsPerSample] {
 			if b != 8 {
-				return nil, UnsupportedError("non-8-bit RGB image")
+				return nil, &UnsupportedError{"non-8-bit RGB image"}
 			}
 		}
 		d.config.ColorModel = color.RGBAModel
@@ -276,10 +282,10 @@ func newDecoder(r io.Reader) (*decoder, error) {
 				d.mode = mNRGBA
 				d.config.ColorModel = color.NRGBAModel
 			default:
-				return nil, FormatError("wrong number of samples for RGB")
+				return nil, &FormatError{"wrong number of samples for RGB"}
 			}
 		default:
-			return nil, FormatError("wrong number of samples for RGB")
+			return nil, &FormatError{"wrong number of samples for RGB"}
 		}
 	case pPaletted:
 		d.mode = mPaletted
@@ -302,7 +308,7 @@ func newDecoder(r io.Reader) (*decoder, error) {
 		d.mode = mNYCbCrA
 		d.config.ColorModel = color.NYCbCrAModel
 	default:
-		return nil, UnsupportedError("color model")
+		return nil, &UnsupportedError{"color model"}
 	}
 
 	return d, nil
@@ -331,7 +337,7 @@ func NewReader(r io.Reader) (io.Reader, error) {
 	switch d.firstVal(tCompression) {
 	case cJPEG, cJPEGOld, cLossyJPEG:
 	default:
-		return nil, UnsupportedError("compression")
+		return nil, &UnsupportedError{"compression"}
 	}
 
 	return io.NewSectionReader(d.r, offset, n), nil
