@@ -34,7 +34,7 @@ import (
 type FormatError string
 
 func (e FormatError) Error() string {
-	return fmt.Sprintf("dng: invalid format: %s", e)
+	return fmt.Sprintf("dng: invalid format: %s", string(e))
 }
 
 // An UnsupportedError reports that the input uses a valid but
@@ -42,14 +42,14 @@ func (e FormatError) Error() string {
 type UnsupportedError string
 
 func (e UnsupportedError) Error() string {
-	return fmt.Sprintf("dng: unsupported feature: %s", e)
+	return fmt.Sprintf("dng: unsupported feature: %s", string(e))
 }
 
 // An InternalError reports that an internal error was encountered.
 type InternalError string
 
 func (e InternalError) Error() string {
-	return fmt.Sprintf("dng: internal error: %s", e)
+	return fmt.Sprintf("dng: internal error: %s", string(e))
 }
 
 type decoder struct {
